@@ -28,6 +28,19 @@ def load_conversation(thread_id):
     # Check if messages key exists in state values, return empty list if not
     return state.values.get('messages', [])
 
+def delete_thread(thread_id):
+    # Remove from chat threads list
+    if thread_id in st.session_state['chat_threads']:
+        st.session_state['chat_threads'].remove(thread_id)
+    
+    # Remove from chat names
+    if thread_id in st.session_state['chat_names']:
+        del st.session_state['chat_names'][thread_id]
+    
+    # If we're deleting the current thread, start a new one
+    if st.session_state['thread_id'] == thread_id:
+        reset_chat()
+
 
 # **************************************** Session Setup ******************************
 if 'message_history' not in st.session_state:
@@ -58,20 +71,29 @@ for thread_id in st.session_state['chat_threads'][::-1]:
     # Use chat name if available, otherwise use "Untitled" instead of thread_id
     chat_display_name = st.session_state['chat_names'].get(thread_id, "Untitled")
     
-    if st.sidebar.button(chat_display_name, key=f"chat_{thread_id}"):
-        st.session_state['thread_id'] = thread_id
-        messages = load_conversation(thread_id)
+    # Create columns for chat name and delete button
+    col1, col2 = st.sidebar.columns([4, 1])
+    
+    with col1:
+        if st.button(chat_display_name, key=f"chat_{thread_id}"):
+            st.session_state['thread_id'] = thread_id
+            messages = load_conversation(thread_id)
 
-        temp_messages = []
+            temp_messages = []
 
-        for msg in messages:
-            if isinstance(msg, HumanMessage):
-                role='user'
-            else:
-                role='assistant'
-            temp_messages.append({'role': role, 'content': msg.content})
+            for msg in messages:
+                if isinstance(msg, HumanMessage):
+                    role='user'
+                else:
+                    role='assistant'
+                temp_messages.append({'role': role, 'content': msg.content})
 
-        st.session_state['message_history'] = temp_messages
+            st.session_state['message_history'] = temp_messages
+    
+    with col2:
+        if st.button("🗑️", key=f"delete_{thread_id}", help="Delete chat"):
+            delete_thread(thread_id)
+            st.rerun()
 
 
 # **************************************** Main UI ************************************
