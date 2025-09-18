@@ -110,3 +110,6 @@ if user_input:
         ai_message = st.write_stream(ai_only_stream())
 
     st.session_state['message_history'].append({'role': 'assistant', 'content': ai_message})
+    
+    # Rerun to update the sidebar with the new chat name
+    st.rerun()
