@@ -9,6 +9,10 @@ def generate_thread_id():
     thread_id = uuid.uuid4()
     return thread_id
 
+def generate_chat_name(message):
+    """Generate a chat name from the first message (first 30 chars)"""
+    return message[:30] + "..." if len(message) > 30 else message
+
 def reset_chat():
     thread_id = generate_thread_id()
     st.session_state['thread_id'] = thread_id
@@ -35,6 +39,9 @@ if 'thread_id' not in st.session_state:
 if 'chat_threads' not in st.session_state:
     st.session_state['chat_threads'] = []
 
+if 'chat_names' not in st.session_state:
+    st.session_state['chat_names'] = {}
+
 add_thread(st.session_state['thread_id'])
 
 
@@ -48,7 +55,10 @@ if st.sidebar.button('New Chat'):
 st.sidebar.header('My Conversations')
 
 for thread_id in st.session_state['chat_threads'][::-1]:
-    if st.sidebar.button(str(thread_id)):
+    # Use chat name if available, otherwise use "Untitled" instead of thread_id
+    chat_display_name = st.session_state['chat_names'].get(thread_id, "Untitled")
+    
+    if st.sidebar.button(chat_display_name, key=f"chat_{thread_id}"):
         st.session_state['thread_id'] = thread_id
         messages = load_conversation(thread_id)
 
@@ -74,9 +84,12 @@ for message in st.session_state['message_history']:
 user_input = st.chat_input('Type here')
 
 if user_input:
-
     # first add the message to message_history
     st.session_state['message_history'].append({'role': 'user', 'content': user_input})
+
+    # Generate chat name from first message if not already set
+    if st.session_state['thread_id'] not in st.session_state['chat_names']:
+        st.session_state['chat_names'][st.session_state['thread_id']] = generate_chat_name(user_input)
     with st.chat_message('user'):
         st.text(user_input)
 
