@@ -79,3 +79,6 @@ langchain_community
 ddgs
 langchain_mcp_adapters
 asyncio
+langraph_rag_backend
+pypdf
+faiss-cpu
